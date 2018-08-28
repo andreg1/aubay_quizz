@@ -8,7 +8,7 @@ using aubay_quizz.Models;
 
 namespace aubay_quizz.Data
 {
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+    public class ApplicationDbContext : IdentityDbContext<CustomUser, CustomRole, int>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)

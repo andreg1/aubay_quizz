@@ -29,7 +29,7 @@ namespace aubay_quizz
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddIdentity<ApplicationUser, IdentityRole>()
+            services.AddIdentity<CustomUser, CustomRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 
@@ -42,6 +42,19 @@ namespace aubay_quizz
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            try
+            {
+                using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>()
+                .CreateScope())
+                {
+                    serviceScope.ServiceProvider.GetService<ApplicationDbContext>().Database.Migrate();
+                }
+            }
+            catch (Exception ex)
+            {
+                //Log.Error(ex, "Failed to migrate or seed database");
+            }
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -63,6 +76,41 @@ namespace aubay_quizz
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
+        }
+
+        private async Task CreateRoles(IServiceProvider serviceProvider)
+        {
+            var RoleManager = serviceProvider.GetRequiredService<RoleManager<CustomRole>>();
+            var UserManager = serviceProvider.GetRequiredService<UserManager<CustomUser>>();
+            string[] roleNames = { "Admin" };
+            IdentityResult roleResult;
+
+            foreach (var roleName in roleNames)
+            {
+                var roleExist = await RoleManager.RoleExistsAsync(roleName);
+                if (!roleExist)
+                {
+                    roleResult = await RoleManager.CreateAsync(new CustomRole(roleName));
+                }
+            }
+            
+            var _user = await UserManager.FindByEmailAsync("admin@email.com");
+            
+            if (_user == null)
+            {
+                var adminUser = new CustomUser
+                {
+                    UserName = "Admin",
+                    Email = "admin@admin.com",
+                };
+                string adminPassword = "123";
+
+                var createAdminUser = await UserManager.CreateAsync(adminUser, adminPassword);
+                if (createAdminUser.Succeeded)
+                {
+                    await UserManager.AddToRoleAsync(adminUser, "Admin");
+                }
+            }
         }
     }
 }
