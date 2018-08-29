@@ -50,7 +50,9 @@ namespace aubay_quizz
                     serviceScope.ServiceProvider.GetService<ApplicationDbContext>().Database.Migrate();
                 }
             }
+#pragma warning disable CS0168 // Variable is declared but never used
             catch (Exception ex)
+#pragma warning restore CS0168 // Variable is declared but never used
             {
                 //Log.Error(ex, "Failed to migrate or seed database");
             }
@@ -93,9 +95,9 @@ namespace aubay_quizz
                     roleResult = await RoleManager.CreateAsync(new CustomRole(roleName));
                 }
             }
-            
+
             var _user = await UserManager.FindByEmailAsync("admin@email.com");
-            
+
             if (_user == null)
             {
                 var adminUser = new CustomUser
